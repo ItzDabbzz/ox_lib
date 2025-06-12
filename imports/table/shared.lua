@@ -123,11 +123,37 @@ local function shuffle(tbl)
     return tbl
 end
 
+--- Returns a json table in a readable format
+---@param tbl table The table to be formatted
+---@param indent number The number of spaces to indent the output
+---@return string
+local function jsonPrettyPrint(tbl, indent)
+    indent = indent or 0
+    local to_print = "{\n"
+    local pad = string.rep("  ", indent + 1)
+    local first = true
+    for k, v in pairs(tbl) do
+        if not first then to_print = to_print .. ",\n" end
+        first = false
+        local key = type(k) == "string" and ('"%s"'):format(k) or tostring(k)
+        if type(v) == "table" then
+            to_print = to_print .. ("%s%s: %s"):format(pad, key, jsonPrettyPrint(v, indent + 1))
+        elseif type(v) == "string" then
+            to_print = to_print .. ("%s%s: \"%s\""):format(pad, key, v)
+        else
+            to_print = to_print .. ("%s%s: %s"):format(pad, key, tostring(v))
+        end
+    end
+    to_print = to_print .. "\n" .. string.rep("  ", indent) .. "}"
+    return to_print
+end
+
 table.contains = contains
 table.matches = table_matches
 table.deepclone = table_deepclone
 table.merge = table_merge
 table.shuffle = shuffle
+table.prettyprint = jsonPrettyPrint
 
 local frozenNewIndex = function(self) error(('cannot set values on a frozen table (%s)'):format(self), 2) end
 local _rawset = rawset

@@ -226,4 +226,35 @@ function math.round(value, places)
     return math.floor(value + 0.5)
 end
 
+--- Random number generator
+--- No support for decimals
+---@param firstNum number
+---@param secondNum number
+---@return number
+function math._random(firstNum, secondNum)
+    local lowNum, highNum
+    if not secondNum then
+        highNum = firstNum
+        lowNum = 1
+    else
+        lowNum = firstNum
+        highNum = secondNum
+    end
+    local total = 1
+    if math.abs(highNum - lowNum + 1) < 50 then                -- if total values is less than 50
+        total = math.modf(50 / math.abs(highNum - lowNum + 1)) -- make x copies required to be above 50
+    end
+    local choices = {}
+    for i = 1, total do               -- iterate required number of times
+        for x = lowNum, highNum do    -- iterate between the range
+            choices[#choices + 1] = x -- add each entry to a table
+        end
+    end
+    local rtnVal = math.random(#choices) -- will now do a math.random of at least 50 choices
+    for i = 1, 10 do
+        rtnVal = math.random(#choices)   -- iterate a few times for giggles
+    end
+    return choices[rtnVal]
+end
+
 return lib.math

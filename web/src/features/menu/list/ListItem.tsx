@@ -15,13 +15,13 @@ interface Props {
 
 const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
   buttonContainer: {
-    backgroundColor: theme.colors.dark[6],
+    backgroundColor: '#313244', // surface0
     borderRadius: theme.radius.md,
     padding: 2,
     height: 60,
     scrollMargin: 8,
     '&:focus': {
-      backgroundColor: theme.colors.dark[4],
+      backgroundColor: '#45475A', // surface1
       outline: 'none',
     },
   },
@@ -41,20 +41,20 @@ const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
   },
   icon: {
     fontSize: 24,
-    color: params.iconColor || theme.colors.dark[2],
+    color: params.iconColor || '#A6ADC8', // overlay2
   },
   label: {
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
     textTransform: 'uppercase',
     fontSize: 12,
     verticalAlign: 'middle',
   },
   chevronIcon: {
     fontSize: 14,
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
   },
   scrollIndexValue: {
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
     textTransform: 'uppercase',
     fontSize: 14,
   },
@@ -67,6 +67,7 @@ const useStyles = createStyles((theme, params: { iconColor?: string }) => ({
     marginBottom: 3,
   },
 }));
+
 
 const ListItem = forwardRef<Array<HTMLDivElement | null>, Props>(({ item, index, scrollIndex, checked }, ref) => {
   const { classes } = useStyles({ iconColor: item.iconColor });

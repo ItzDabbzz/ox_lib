@@ -5,12 +5,13 @@ import { fetchNui } from '../../utils/fetchNui';
 import ScaleFade from '../../transitions/ScaleFade';
 import type { ProgressbarProps } from '../../typings';
 
+
 const useStyles = createStyles((theme) => ({
   container: {
     width: 350,
     height: 45,
     borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.dark[5],
+    backgroundColor: '#313244', // surface0
     overflow: 'hidden',
   },
   wrapper: {
@@ -24,7 +25,7 @@ const useStyles = createStyles((theme) => ({
   },
   bar: {
     height: '100%',
-    backgroundColor: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
+    backgroundColor: '#89B4FA', // blue
   },
   labelWrapper: {
     position: 'absolute',
@@ -41,8 +42,8 @@ const useStyles = createStyles((theme) => ({
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     fontSize: 20,
-    color: theme.colors.gray[3],
-    textShadow: theme.shadows.sm,
+    color: '#CDD6F4', // text
+    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
   },
 }));
 

@@ -23,9 +23,8 @@ const useStyles = createStyles((theme, params: { position: 'middle' | 'bottom'; 
   },
   progress: {
     '> svg > circle:nth-child(1)': {
-      stroke: theme.colors.dark[5],
+      stroke: '#313244', // Mocha surface0
     },
-    // Scuffed way of grabbing the first section and animating it
     '> svg > circle:nth-child(2)': {
       transition: 'none',
       animation: `${progressCircle} linear forwards`,
@@ -34,20 +33,21 @@ const useStyles = createStyles((theme, params: { position: 'middle' | 'bottom'; 
   },
   value: {
     textAlign: 'center',
-    fontFamily: 'Roboto Mono',
-    textShadow: theme.shadows.sm,
-    color: theme.colors.gray[3],
+    fontFamily: 'roboto-mono',
+    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+    color: '#CDD6F4', // Mocha text
   },
   label: {
     textAlign: 'center',
-    textShadow: theme.shadows.sm,
-    color: theme.colors.gray[3],
+    textShadow: '1px 1px 3px rgba(0, 0, 0, 0.5)',
+    color: '#BAC2DE', // Mocha subtext1
     height: 25,
   },
   wrapper: {
     marginTop: params.position === 'middle' ? 25 : undefined,
   },
 }));
+
 
 const CircleProgressbar: React.FC = () => {
   const [visible, setVisible] = React.useState(false);

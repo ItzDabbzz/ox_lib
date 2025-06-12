@@ -21,11 +21,16 @@ const useStyles = createStyles((theme, params: { canClose?: boolean }) => ({
   },
   root: {
     border: 'none',
+    backgroundColor: '#313244', // surface0
+    '&:hover': {
+      backgroundColor: '#45475A', // surface1
+    },
   },
   label: {
-    color: params.canClose === false ? theme.colors.dark[2] : theme.colors.dark[0],
+    color: params.canClose === false ? '#A6ADC8' : '#CDD6F4', // overlay2 : text
   },
 }));
+
 
 const HeaderButton: React.FC<Props> = ({ icon, canClose, iconSize, handleClick }) => {
   const { classes } = useStyles({ canClose });

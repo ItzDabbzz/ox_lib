@@ -10,8 +10,8 @@ import LibIcon from '../../../components/LibIcon';
 
 const useStyles = createStyles((theme, params: { position?: MenuPosition; itemCount: number; selected: number }) => ({
   tooltip: {
-    backgroundColor: theme.colors.dark[6],
-    color: theme.colors.dark[2],
+    backgroundColor: '#313244', // surface0
+    color: '#A6ADC8', // overlay2
     borderRadius: theme.radius.sm,
     maxWidth: 350,
     whiteSpace: 'normal',
@@ -34,22 +34,23 @@ const useStyles = createStyles((theme, params: { position?: MenuPosition; itemCo
     maxHeight: 415,
     overflow: 'hidden',
     borderRadius: params.itemCount <= 6 || params.selected === params.itemCount - 1 ? theme.radius.md : undefined,
-    backgroundColor: theme.colors.dark[8],
+    backgroundColor: '#1E1E2E', // base
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
   },
   scrollArrow: {
-    backgroundColor: theme.colors.dark[8],
+    backgroundColor: '#1E1E2E', // base
     textAlign: 'center',
     borderBottomLeftRadius: theme.radius.md,
     borderBottomRightRadius: theme.radius.md,
     height: 25,
   },
   scrollArrowIcon: {
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
     fontSize: 20,
   },
 }));
+
 
 const ListMenu: React.FC = () => {
   const [menu, setMenu] = useState<MenuSettings>({

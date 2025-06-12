@@ -30,10 +30,10 @@ const useStyles = createStyles((theme) => ({
   titleContainer: {
     borderRadius: 4,
     flex: '1 85%',
-    backgroundColor: theme.colors.dark[6],
+    backgroundColor: '#313244', // surface0
   },
   titleText: {
-    color: theme.colors.dark[0],
+    color: '#CDD6F4', // text
     padding: 6,
     textAlign: 'center',
   },
@@ -45,6 +45,7 @@ const useStyles = createStyles((theme) => ({
     gap: 3,
   },
 }));
+
 
 const ContextMenu: React.FC = () => {
   const { classes } = useStyles();

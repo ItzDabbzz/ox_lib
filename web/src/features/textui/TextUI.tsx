@@ -14,22 +14,39 @@ const useStyles = createStyles((theme, params: { position?: TextUiPosition }) =>
     width: '100%',
     position: 'absolute',
     display: 'flex',
-    alignItems: 
+    alignItems:
       params.position === 'top-center' ? 'baseline' :
       params.position === 'bottom-center' ? 'flex-end' : 'center',
-    justifyContent: 
+    justifyContent:
       params.position === 'right-center' ? 'flex-end' :
       params.position === 'left-center' ? 'flex-start' : 'center',
   },
   container: {
-    fontSize: 16,
-    padding: 12,
+    fontSize: 15,
+    lineHeight: 1.6,
+    padding: 16,
     margin: 8,
-    backgroundColor: theme.colors.dark[6],
-    color: theme.colors.dark[0],
-    fontFamily: 'Roboto',
-    borderRadius: theme.radius.sm,
-    boxShadow: theme.shadows.sm,
+    background: 'rgba(49, 50, 68, 0.98)',
+    color: '#CDD6F4',
+    fontFamily: 'Roboto, sans-serif',
+    borderRadius: theme.radius.lg,
+    boxShadow: '0 6px 24px rgba(0,0,0,0.25)',
+    border: '2px solid #45475A',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    maxWidth: '90vw',
+    minWidth: 220,
+    wordBreak: 'break-word',
+    transition: 'box-shadow 0.2s, background 0.2s',
+    pointerEvents: 'auto', // allow interaction
+    '& strong': {
+      color: '#89B4FA',
+      fontWeight: 700,
+    },
+    '& em': {
+      color: '#F5C2E7',
+      fontStyle: 'italic',
+    },
   },
 }));
 
@@ -53,7 +70,7 @@ const TextUI: React.FC = () => {
     <>
       <Box className={classes.wrapper}>
         <ScaleFade visible={visible}>
-          <Box style={data.style} className={classes.container}>
+          <Box style={data.style} className={classes.container} role="status" aria-live='polite'>
             <Group spacing={12}>
               {data.icon && (
                 <LibIcon
@@ -64,6 +81,9 @@ const TextUI: React.FC = () => {
                   style={{
                     color: data.iconColor,
                     alignSelf: !data.alignIcon || data.alignIcon === 'center' ? 'center' : 'start',
+                    minWidth: 16,
+                    minHeight: 32,
+                    fontSize: 24,
                   }}
                 />
               )}

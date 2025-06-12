@@ -10,9 +10,10 @@ import MarkdownComponents from '../../config/MarkdownComponents';
 
 const useStyles = createStyles((theme) => ({
   contentStack: {
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
   },
 }));
+
 
 const AlertDialog: React.FC = () => {
   const { locale } = useLocales();

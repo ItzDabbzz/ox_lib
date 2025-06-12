@@ -1,5 +1,5 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import { fas } from '@fortawesome/free-solid-svg-icons';
@@ -9,7 +9,6 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { isEnvBrowser } from './utils/misc';
 import LocaleProvider from './providers/LocaleProvider';
 import ConfigProvider from './providers/ConfigProvider';
-import ErrorBoundary from './providers/errorBoundary';
 
 library.add(fas, far, fab);
 
@@ -17,22 +16,20 @@ if (isEnvBrowser()) {
   const root = document.getElementById('root');
 
   // https://i.imgur.com/iPTAdYV.png - Night time img
-  root!.style.backgroundImage = 'url("https://i.imgur.com/3pzRj9n.png")';
+  // https://share.sanctumrp.net/view_media.php?user=dabz&file=2a03726e71cf8155.png&raw=1 - Day time img
+  root!.style.backgroundImage = 'url("https://share.sanctumrp.net/view_media.php?user=dabz&file=2a03726e71cf8155.png&raw=1")';
   root!.style.backgroundSize = 'cover';
   root!.style.backgroundRepeat = 'no-repeat';
   root!.style.backgroundPosition = 'center';
 }
 
 const root = document.getElementById('root');
-
-createRoot(root!).render(
-  <StrictMode>
+ReactDOM.createRoot(root!).render(
+  <React.StrictMode>
     <LocaleProvider>
       <ConfigProvider>
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
+        <App />
       </ConfigProvider>
     </LocaleProvider>
-  </StrictMode>
+  </React.StrictMode>
 );

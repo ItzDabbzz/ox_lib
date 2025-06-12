@@ -9,40 +9,46 @@ import type { RadialMenuItem } from '../../../typings';
 import { useLocales } from '../../../providers/LocaleProvider';
 import LibIcon from '../../../components/LibIcon';
 
-const useStyles = createStyles((theme) => ({
+const MENU_SIZE = 360;
+const CENTER = MENU_SIZE / 2;
+const OUTER_RADIUS = 180;
+const INNER_RADIUS = 70;
+const CENTER_RADIUS = 32;
+const ICON_SIZE = 20;
+const PAGE_ITEMS = 8;
+const SECTOR_GAP_DEG = 0;
+const MAX_LABEL_LINE_LENGTH = 12;
+
+const useStyles = createStyles(() => ({
   wrapper: {
     position: 'absolute',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
+    pointerEvents: 'auto',
+    zIndex: 1000,
+    padding: 16,
   },
   sector: {
-    fill: theme.colors.dark[6],
-    color: theme.colors.dark[0],
-
+    transition: 'fill 0.2s, filter 0.2s',
+    cursor: 'pointer',
+    filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.10))',
     '&:hover': {
-      fill: theme.fn.primaryColor(),
-      cursor: 'pointer',
-      '> g > text, > g > svg > path': {
-        fill: '#fff',
-      },
-    },
-    '> g > text': {
-      fill: theme.colors.dark[0],
-      strokeWidth: 0,
+      fill: '#A6ADC8',
+      filter: 'brightness(1.15) drop-shadow(0 4px 16px rgba(203,166,247,0.18))',
     },
   },
   backgroundCircle: {
-    fill: theme.colors.dark[6],
+    fill: 'rgba(49,50,68,0.75)',
   },
   centerCircle: {
-    fill: theme.fn.primaryColor(),
-    color: '#fff',
-    stroke: theme.colors.dark[6],
-    strokeWidth: 4,
+    fill: '#CBA6F7',
+    stroke: '#313244',
+    strokeWidth: 2,
+    cursor: 'pointer',
+    transition: 'fill 0.2s',
     '&:hover': {
-      cursor: 'pointer',
-      fill: theme.colors[theme.primaryColor][theme.fn.primaryShade() - 1],
+      fill: '#B4BEFE',
     },
   },
   centerIconContainer: {
@@ -51,43 +57,63 @@ const useStyles = createStyles((theme) => ({
     left: '50%',
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none',
+    zIndex: 2,
   },
   centerIcon: {
-    color: '#fff',
+    color: '#313244',
+    fontSize: 28,
+  },
+  label: {
+    fontSize: 12,
+    fill: '#CDD6F4',
+    pointerEvents: 'none',
+    userSelect: 'none',
+    fontWeight: 500,
+    textShadow: '0 1px 2px rgba(0,0,0,0.25)',
   },
 }));
 
-const calculateFontSize = (text: string): number => {
-  if (text.length > 20) return 10;
-  if (text.length > 15) return 12;
-  return 13;
-};
+function getSectorPath(
+  cx: number,
+  cy: number,
+  r1: number,
+  r2: number,
+  startAngle: number,
+  endAngle: number,
+  angleGap: number = 2 
+): string {
+  const toRad = (deg: number) => (Math.PI / 180) * deg;
 
-const splitTextIntoLines = (text: string, maxCharPerLine: number = 15): string[] => {
-  const words = text.split(' ');
-  const lines: string[] = [];
-  let currentLine = words[0];
+  const adjustedStart = startAngle + angleGap / 2;
+  const adjustedEnd = endAngle - angleGap / 2;
 
-  for (let i = 1; i < words.length; i++) {
-    if (currentLine.length + words[i].length + 1 <= maxCharPerLine) {
-      currentLine += ' ' + words[i];
-    } else {
-      lines.push(currentLine);
-      currentLine = words[i];
-    }
-  }
-  lines.push(currentLine);
-  return lines;
-};
+  const x1 = cx + r1 * Math.cos(toRad(adjustedStart));
+  const y1 = cy + r1 * Math.sin(toRad(adjustedStart));
 
-const PAGE_ITEMS = 6;
+  const x2 = cx + r2 * Math.cos(toRad(adjustedStart));
+  const y2 = cy + r2 * Math.sin(toRad(adjustedStart));
 
-const degToRad = (deg: number) => deg * (Math.PI / 180);
+  const x3 = cx + r2 * Math.cos(toRad(adjustedEnd));
+  const y3 = cy + r2 * Math.sin(toRad(adjustedEnd));
+
+  const x4 = cx + r1 * Math.cos(toRad(adjustedEnd));
+  const y4 = cy + r1 * Math.sin(toRad(adjustedEnd));
+
+  const largeArc = adjustedEnd - adjustedStart > 180 ? 1 : 0;
+
+  return [
+    `M ${x1} ${y1}`,
+    `L ${x2} ${y2}`,
+    `A ${r2} ${r2} 0 ${largeArc} 1 ${x3} ${y3}`,
+    `L ${x4} ${y4}`,
+    `A ${r1} ${r1} 0 ${largeArc} 0 ${x1} ${y1}`,
+    'Z'
+  ].join(' ');
+}
 
 const RadialMenu: React.FC = () => {
   const { classes } = useStyles();
   const { locale } = useLocales();
-  const newDimension = 350 * 1.1025;
   const [visible, setVisible] = useState(false);
   const [menuItems, setMenuItems] = useState<RadialMenuItem[]>([]);
   const [menu, setMenu] = useState<{ items: RadialMenuItem[]; sub?: boolean; page: number }>({
@@ -98,11 +124,8 @@ const RadialMenu: React.FC = () => {
 
   const changePage = async (increment?: boolean) => {
     setVisible(false);
-
     const didTransition: boolean = await fetchNui('radialTransition');
-
     if (!didTransition) return;
-
     setVisible(true);
     setMenu({ ...menu, page: increment ? menu.page + 1 : menu.page - 1 });
   };
@@ -135,124 +158,172 @@ const RadialMenu: React.FC = () => {
     setMenu({ ...menu, items: data });
   });
 
-  return (
-    <>
-      <Box
-        className={classes.wrapper}
-        onContextMenu={async () => {
-          if (menu.page > 1) await changePage();
-          else if (menu.sub) fetchNui('radialBack');
-        }}
-      >
-        <ScaleFade visible={visible}>
-          <svg
-            style={{ overflow: 'visible' }}
-            width={`${newDimension}px`}
-            height={`${newDimension}px`}
-            viewBox="0 0 350 350"
-            transform="rotate(90)"
-          >
-            {/* Fixed issues with background circle extending the circle when there's less than 3 items */}
-            <g transform="translate(175, 175)">
-              <circle r={175} className={classes.backgroundCircle} />
-            </g>
-            {menuItems.map((item, index) => {
-              const pieAngle = 360 / (menuItems.length < 3 ? 3 : menuItems.length);
-              const angle = degToRad(pieAngle / 2 + 90);
-              const gap = 1;
-              const radius = 175 * 0.65 - gap;
-              const sinAngle = Math.sin(angle);
-              const cosAngle = Math.cos(angle);
-              const iconYOffset = splitTextIntoLines(item.label, 15).length > 3 ? 3 : 0;
-              const iconX = 175 + sinAngle * radius;
-              const iconY = 175 + cosAngle * radius + iconYOffset; // Apply the Y offset to iconY
-              const iconWidth = Math.min(Math.max(item.iconWidth || 50, 0), 100);
-              const iconHeight = Math.min(Math.max(item.iconHeight || 50, 0), 100);
+  // --- UI ---
+  const sectorCount = Math.max(menuItems.length, 3);
+  const anglePerSector = 360 / sectorCount;
+  const gap = SECTOR_GAP_DEG;
 
-              return (
-                <g
-                  transform={`rotate(-${index * pieAngle} 175 175) translate(${sinAngle * gap}, ${cosAngle * gap})`}
-                  className={classes.sector}
-                  onClick={async () => {
-                    const clickIndex = menu.page === 1 ? index : PAGE_ITEMS * (menu.page - 1) - (menu.page - 1) + index;
-                    if (!item.isMore) fetchNui('radialClick', clickIndex);
-                    else {
-                      await changePage(true);
-                    }
-                  }}
-                >
-                  <path
-                    d={`M175.01,175.01 l${175 - gap},0 A175.01,175.01 0 0,0 ${
-                      175 + (175 - gap) * Math.cos(-degToRad(pieAngle))
-                    }, ${175 + (175 - gap) * Math.sin(-degToRad(pieAngle))} z`}
+  function splitTextIntoLines(label: string, MAX_LABEL_LINE_LENGTH: number): string[] {
+    if (!label) return [''];
+    const words = label.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      // If adding the next word exceeds the max length, start a new line
+      if ((currentLine + (currentLine ? ' ' : '') + word).length > MAX_LABEL_LINE_LENGTH) {
+        if (currentLine) lines.push(currentLine);
+        // If the word itself is longer than the max, split it forcibly
+        if (word.length > MAX_LABEL_LINE_LENGTH) {
+          let start = 0;
+          while (start < word.length) {
+            lines.push(word.slice(start, start + MAX_LABEL_LINE_LENGTH));
+            start += MAX_LABEL_LINE_LENGTH;
+          }
+          currentLine = '';
+        } else {
+          currentLine = word;
+        }
+      } else {
+        currentLine += (currentLine ? ' ' : '') + word;
+      }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  }
+
+
+  return visible ? (
+    <Box className={classes.wrapper} style={{ width: MENU_SIZE, height: MENU_SIZE }}>
+      <ScaleFade visible={visible}>
+        <svg width={MENU_SIZE} height={MENU_SIZE} viewBox={`0 0 ${MENU_SIZE} ${MENU_SIZE}`}>
+          {/* Background circle */}
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={OUTER_RADIUS}
+            className={classes.backgroundCircle}
+            style={{ filter: 'blur(1px)' }}
+          />
+          {/* Sectors */}
+          {menuItems.map((item, idx) => {
+            const startAngle = idx * anglePerSector + gap / 2 - 90;
+            const endAngle = (idx + 1) * anglePerSector - gap / 2 - 90;
+            const midAngle = (startAngle + endAngle) / 2;
+            const iconX = CENTER + Math.cos((Math.PI / 180) * midAngle) * ((OUTER_RADIUS + INNER_RADIUS) / 2);
+            const iconY = CENTER + Math.sin((Math.PI / 180) * midAngle) * ((OUTER_RADIUS + INNER_RADIUS) / 2);
+            const lines = splitTextIntoLines(item.label, MAX_LABEL_LINE_LENGTH);
+            const labelY = iconY + ICON_SIZE / 1.2;
+
+            return (
+              <g
+                key={idx}
+                className={classes.sector}
+                onClick={async () => {
+                  const clickIndex = menu.page === 1 ? idx : PAGE_ITEMS * (menu.page - 1) - (menu.page - 1) + idx;
+                  if (!item.isMore) fetchNui('radialClick', clickIndex);
+                  else await changePage(true);
+                }}
+              >
+                <path
+                  d={getSectorPath(CENTER, CENTER, INNER_RADIUS, OUTER_RADIUS, startAngle, endAngle)}
+                  fill="#45475A"
+                />
+                {/* Icon */}
+                {typeof item.icon === 'string' && isIconUrl(item.icon) ? (
+                  <image
+                    href={item.icon}
+                    width={ICON_SIZE}
+                    height={ICON_SIZE}
+                    x={iconX - ICON_SIZE / 2}
+                    y={iconY - ICON_SIZE / 2}
                   />
-                  <g transform={`rotate(${index * pieAngle - 90} ${iconX} ${iconY})`} pointerEvents="none">
-                    {typeof item.icon === 'string' && isIconUrl(item.icon) ? (
-                      <image
-                        href={item.icon}
-                        width={iconWidth}
-                        height={iconHeight}
-                        x={iconX - iconWidth / 2}
-                        y={iconY - iconHeight / 2 - iconHeight / 4}
-                      />
-                    ) : (
-                      <LibIcon
-                        x={iconX - 14.5}
-                        y={iconY - 17.5}
-                        icon={item.icon as IconProp}
-                        width={30}
-                        height={30}
-                        fixedWidth
-                      />
-                    )}
-                    <text
+                ) : (
+                  <LibIcon
+                    x={iconX - ICON_SIZE / 2}
+                    y={iconY - ICON_SIZE / 2}
+                    icon={item.icon as IconProp}
+                    width={ICON_SIZE}
+                    height={ICON_SIZE}
+                    fixedWidth
+                  />
+                )}
+                {/* Label */}
+                <text
+                  x={iconX}
+                  y={labelY}
+                  className={classes.label}
+                  textAnchor="middle"
+                  dominantBaseline="hanging"
+                >
+                  {lines.map((line, i) => (
+                    <tspan
+                      key={i}
                       x={iconX}
-                      y={iconY + (splitTextIntoLines(item.label, 15).length > 2 ? 15 : 28)}
-                      fill="#fff"
-                      textAnchor="middle"
-                      fontSize={calculateFontSize(item.label)}
-                      pointerEvents="none"
-                      lengthAdjust="spacingAndGlyphs"
+                      dy={i === 0 ? 0 : '1.2em'}
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 500,
+                        fill: '#CDD6F4',
+                        textShadow: '0 1px 2px rgba(0,0,0,0.25)',
+                        maxWidth: 60, // px, adjust as needed
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'pre',
+                      }}
                     >
-                      {splitTextIntoLines(item.label, 15).map((line, index) => (
-                        <tspan x={iconX} dy={index === 0 ? 0 : '1.2em'} key={index}>
-                          {line}
-                        </tspan>
-                      ))}
-                    </text>
-                  </g>
-                </g>
-              );
-            })}
-            <g
-              transform={`translate(175, 175)`}
-              onClick={async () => {
-                if (menu.page > 1) await changePage();
-                else {
-                  if (menu.sub) fetchNui('radialBack');
-                  else {
-                    setVisible(false);
-                    fetchNui('radialClose');
-                  }
-                }
-              }}
+                      {line.length > MAX_LABEL_LINE_LENGTH + 2 ? line.slice(0, MAX_LABEL_LINE_LENGTH) + '…' : line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
+            );
+          })}
+          {/* Center button */}
+          <g
+            onClick={async () => {
+              if (menu.page > 1) await changePage();
+              else if (menu.sub) fetchNui('radialBack');
+              else {
+                setVisible(false);
+                fetchNui('radialClose');
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            <circle cx={CENTER} cy={CENTER} r={CENTER_RADIUS} className={classes.centerCircle} />
+            <foreignObject
+              x={CENTER - 16}
+              y={CENTER - 16}
+              width={32}
+              height={32}
+              style={{ pointerEvents: 'none' }}
             >
-              <circle r={28} className={classes.centerCircle} />
-            </g>
-          </svg>
-          <div className={classes.centerIconContainer}>
-            <LibIcon
-              icon={!menu.sub && menu.page < 2 ? 'xmark' : 'arrow-rotate-left'}
-              fixedWidth
-              className={classes.centerIcon}
-              color="#fff"
-              size="2x"
-            />
-          </div>
-        </ScaleFade>
-      </Box>
-    </>
-  );
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32 }}>
+                <LibIcon
+                  icon={!menu.sub && menu.page < 2 ? 'xmark' : 'arrow-rotate-left'}
+                  fixedWidth
+                  color="#313244"
+                  size="lg"
+                  style={{ width: 32, height: 32, fontSize: 24 }}
+                />
+              </div>
+            </foreignObject>
+          </g>
+        </svg>
+        {/* Center icon */}
+        {/* <div className={classes.centerIconContainer}>
+          <LibIcon
+            icon={!menu.sub && menu.page < 2 ? 'xmark' : 'arrow-rotate-left'}
+            fixedWidth
+            className={classes.centerIcon}
+            color="#313244"
+            size="lg"
+          />
+        </div> */}
+      </ScaleFade>
+    </Box>
+  ) : null;
 };
 
 export default RadialMenu;

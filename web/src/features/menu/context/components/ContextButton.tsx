@@ -21,7 +21,7 @@ const useStyles = createStyles((theme, params: { disabled?: boolean; readOnly?: 
   },
   label: {
     width: '100%',
-    color: params.disabled ? theme.colors.dark[3] : theme.colors.dark[0],
+    color: params.disabled ? '#7F849C' : '#CDD6F4', // overlay0 : text
     whiteSpace: 'pre-wrap',
   },
   button: {
@@ -29,7 +29,7 @@ const useStyles = createStyles((theme, params: { disabled?: boolean; readOnly?: 
     width: '100%',
     padding: 10,
     '&:hover': {
-      backgroundColor: params.readOnly ? theme.colors.dark[6] : undefined,
+      backgroundColor: params.readOnly ? '#313244' : '#45475A', // surface0 : surface1
       cursor: params.readOnly ? 'unset' : 'pointer',
     },
     '&:active': {
@@ -40,16 +40,17 @@ const useStyles = createStyles((theme, params: { disabled?: boolean; readOnly?: 
     maxWidth: '25px',
   },
   description: {
-    color: params.disabled ? theme.colors.dark[3] : theme.colors.dark[2],
+    color: params.disabled ? '#7F849C' : '#A6ADC8', // overlay0 : overlay2
     fontSize: 12,
   },
   dropdown: {
     padding: 10,
-    color: theme.colors.dark[0],
+    color: '#CDD6F4', // text
     fontSize: 14,
     maxWidth: 256,
     width: 'fit-content',
     border: 'none',
+    backgroundColor: '#313244', // surface0
   },
   buttonStack: {
     gap: 4,
@@ -75,6 +76,7 @@ const useStyles = createStyles((theme, params: { disabled?: boolean; readOnly?: 
     height: 25,
   },
 }));
+
 
 const ContextButton: React.FC<{
   option: [string, Option];

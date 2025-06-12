@@ -12,8 +12,8 @@ const useStyles = createStyles((theme) => ({
   container: {
     width: 300,
     height: 'fit-content',
-    backgroundColor: theme.colors.dark[6],
-    color: theme.colors.dark[0],
+    backgroundColor: '#1E1E2E', // base
+    color: '#CDD6F4', // text
     padding: 12,
     borderRadius: theme.radius.sm,
     fontFamily: 'Roboto',
@@ -22,20 +22,22 @@ const useStyles = createStyles((theme) => ({
   title: {
     fontWeight: 500,
     lineHeight: 'normal',
+    color: '#CDD6F4', // text
   },
   description: {
     fontSize: 12,
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
     fontFamily: 'Roboto',
     lineHeight: 'normal',
   },
   descriptionOnly: {
     fontSize: 14,
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
     fontFamily: 'Roboto',
     lineHeight: 'normal',
   },
 }));
+
 
 const createAnimation = (from: string, to: string, visible: boolean) => keyframes({
   from: {
@@ -123,22 +125,22 @@ const Notifications: React.FC = () => {
     if (!data.iconColor) {
       switch (data.type) {
         case 'error':
-          iconColor = 'red.6';
+          iconColor = '#F38BA8'; // red
           break;
         case 'success':
-          iconColor = 'teal.6';
+          iconColor = '#A6E3A1'; // green
           break;
         case 'warning':
-          iconColor = 'yellow.6';
+          iconColor = '#F9E2AF'; // yellow
           break;
         default:
-          iconColor = 'blue.6';
+          iconColor = '#89B4FA'; // blue
           break;
       }
     } else {
       iconColor = tinycolor(data.iconColor).toRgbString();
     }
-    
+
     toast.custom(
       (t) => (
         <Box

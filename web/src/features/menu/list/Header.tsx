@@ -6,7 +6,7 @@ const useStyles = createStyles((theme) => ({
     textAlign: 'center',
     borderTopLeftRadius: theme.radius.md,
     borderTopRightRadius: theme.radius.md,
-    backgroundColor: theme.colors.dark[6],
+    backgroundColor: '#313244', // surface0
     height: 60,
     width: 384,
     display: 'flex',
@@ -17,8 +17,10 @@ const useStyles = createStyles((theme) => ({
     fontSize: 24,
     textTransform: 'uppercase',
     fontWeight: 500,
+    color: '#CDD6F4', // text
   },
 }));
+
 
 const Header: React.FC<{ title: string }> = ({ title }) => {
   const { classes } = useStyles();

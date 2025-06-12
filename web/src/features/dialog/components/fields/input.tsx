@@ -12,9 +12,10 @@ interface Props {
 
 const useStyles = createStyles((theme) => ({
   eyeIcon: {
-    color: theme.colors.dark[2],
+    color: '#A6ADC8', // overlay2
   },
 }));
+
 
 const InputField: React.FC<Props> = (props) => {
   const { classes } = useStyles();

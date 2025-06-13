@@ -205,10 +205,11 @@ local function renderText3D(options)
         local bgColor = validateColor(options.background.color, { 0, 0, 0, 100 })
         local padding = options.background.padding or 0.01
         local textLength = #options.text
-        local width = (textLength * scale * 0.012) + padding
-        local height = scale * 0.025 + padding
+        local width = (textLength * scale * 0.012) + (padding * 2)
+        local height = (scale * 0.025) + (padding * 2)
 
-        DrawRect(screenX, screenY + (height * 0.5), width, height, bgColor[1], bgColor[2], bgColor[3], bgColor[4])
+        -- The text is drawn at screenY, so the background should also be centered at screenY
+        DrawRect(screenX, screenY, width, height, bgColor[1], bgColor[2], bgColor[3], bgColor[4])
     end
 
     -- Set text properties
@@ -226,6 +227,7 @@ local function renderText3D(options)
     AddTextComponentSubstringPlayerName(options.text)
     DrawText(screenX, screenY)
 end
+
 
 --- Draws 3D text at world coordinates for a single frame
 ---@param options DrawTextOptions

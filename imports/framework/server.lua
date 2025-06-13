@@ -52,6 +52,25 @@ local function detectAndInitFramework()
         return detectedFramework, frameworkObject
     end
 
+    -- Check for legacy ESX
+    if GetResourceState('esx_core') == 'started' then
+        detectedFramework = 'esx'
+        frameworkObject = exports['esx_core']:getSharedObject()
+        lib.print.info('Framework detected: ESX Legacy')
+        return detectedFramework, frameworkObject
+    end
+
+    -- Check for other ESX variants
+    local esxVariants = { 'esx-legacy', 'esx_legacy', 'extendedmode' }
+    for _, variant in ipairs(esxVariants) do
+        if GetResourceState(variant) == 'started' then
+            detectedFramework = 'esx'
+            frameworkObject = exports[variant]:getSharedObject()
+            lib.print.info(('Framework detected: %s'):format(variant))
+            return detectedFramework, frameworkObject
+        end
+    end
+
     lib.print.warn('No supported framework detected')
     return nil, nil
 end
@@ -63,11 +82,23 @@ function lib.framework.getFramework()
     return framework
 end
 
+--- Get the framework name (alias for getFramework)
+---@return string? name The framework name ('esx', 'qb', 'qbx')
+function lib.framework.getName()
+    return lib.framework.getFramework()
+end
+
 --- Get the framework object
 ---@return table? frameworkObj The framework object
 function lib.framework.getFrameworkObject()
     local _, obj = detectAndInitFramework()
     return obj
+end
+
+--- Get the shared object for the framework (alias for getFrameworkObject)
+---@return table? sharedObject The framework's shared object
+function lib.framework.getSharedObject()
+    return lib.framework.getFrameworkObject()
 end
 
 --- Get a player object from any framework
@@ -152,15 +183,21 @@ function lib.framework.getPlayerIdentifier(source, identifierType)
     local framework = lib.framework.getFramework()
 
     if framework == 'esx' then
-        return player.getIdentifier and player.getIdentifier() or player.identifier
+        if identifierType == 'license' then
+            return player.getIdentifier and player.getIdentifier() or player.identifier
+        else
+            return player.getIdentifier(identifierType)
+        end
     elseif framework == 'qb' or framework == 'qbx' then
-        if player.PlayerData and player.PlayerData.license then
+        if player.PlayerData then
             if identifierType == 'license' then
                 return player.PlayerData.license
             elseif identifierType == 'steam' then
                 return player.PlayerData.steam
             elseif identifierType == 'discord' then
                 return player.PlayerData.discord
+            elseif identifierType == 'citizenid' then
+                return player.PlayerData.citizenid
             end
         end
     end
@@ -174,6 +211,153 @@ function lib.framework.getPlayerIdentifier(source, identifierType)
     end
 
     return nil
+end
+
+--- Checks if a player has a specific job
+---@param source number Player source ID
+---@param jobName string Job name to check
+---@param grade? number Minimum grade required
+---@return boolean hasJob Whether the player has the job
+function lib.framework.hasJob(source, jobName, grade)
+    local player = lib.framework.getPlayer(source)
+    if not player then
+        return false
+    end
+
+    local framework = lib.framework.getFramework()
+
+    if framework == 'esx' then
+        local playerJob = player.getJob()
+        if not playerJob or playerJob.name ~= jobName then
+            return false
+        end
+
+        if grade and playerJob.grade < grade then
+            return false
+        end
+
+        return true
+    elseif framework == 'qb' or framework == 'qbx' then
+        local playerJob = player.PlayerData.job
+        if not playerJob or playerJob.name ~= jobName then
+            return false
+        end
+
+        if grade and playerJob.grade.level < grade then
+            return false
+        end
+
+        return true
+    end
+
+    return false
+end
+
+--- Gets the player's current job
+---@param source number Player source ID
+---@return table? job Job information or nil if not found
+function lib.framework.getPlayerJob(source)
+    local player = lib.framework.getPlayer(source)
+    if not player then
+        return nil
+    end
+
+    local framework = lib.framework.getFramework()
+
+    if framework == 'esx' then
+        return player.getJob()
+    elseif framework == 'qb' or framework == 'qbx' then
+        return player.PlayerData.job
+    end
+
+    return nil
+end
+
+--- Gets the player's money amount
+---@param source number Player source ID
+---@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
+---@return number amount Money amount
+function lib.framework.getPlayerMoney(source, moneyType)
+    local player = lib.framework.getPlayer(source)
+    if not player then
+        return 0
+    end
+
+    moneyType = moneyType or 'cash'
+    local framework = lib.framework.getFramework()
+
+    if framework == 'esx' then
+        if moneyType == 'cash' then
+            return player.getMoney()
+        elseif moneyType == 'bank' then
+            return player.getAccount('bank').money
+        else
+            local account = player.getAccount(moneyType)
+            return account and account.money or 0
+        end
+    elseif framework == 'qb' or framework == 'qbx' then
+        return player.PlayerData.money[moneyType] or 0
+    end
+
+    return 0
+end
+
+--- Adds money to a player
+---@param source number Player source ID
+---@param amount number Amount to add
+---@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
+---@param reason? string Reason for the transaction
+---@return boolean success Whether the money was added successfully
+function lib.framework.addPlayerMoney(source, amount, moneyType, reason)
+    local player = lib.framework.getPlayer(source)
+    if not player then
+        return false
+    end
+
+    moneyType = moneyType or 'cash'
+    local framework = lib.framework.getFramework()
+
+    if framework == 'esx' then
+        if moneyType == 'cash' then
+            player.addMoney(amount, reason)
+        else
+            player.addAccountMoney(moneyType, amount, reason)
+        end
+        return true
+    elseif framework == 'qb' or framework == 'qbx' then
+        return player.Functions.AddMoney(moneyType, amount, reason) or false
+    end
+
+    return false
+end
+
+--- Removes money from a player
+---@param source number Player source ID
+---@param amount number Amount to remove
+---@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
+---@param reason? string Reason for the transaction
+---@return boolean success Whether the money was removed successfully
+function lib.framework.removePlayerMoney(source, amount, moneyType, reason)
+    local player = lib.framework.getPlayer(source)
+    if not player then
+        return false
+    end
+
+    moneyType = moneyType or 'cash'
+    local framework = lib.framework.getFramework()
+
+    if framework == 'esx' then
+        if moneyType == 'cash' then
+            player.removeMoney(amount, reason)
+        else
+            player.removeAccountMoney(moneyType, amount, reason)
+        end
+        return true
+    elseif framework == 'qb' or framework == 'qbx' then
+        return player.Functions.RemoveMoney(moneyType, amount, reason) or false
+    end
+
+    return false
 end
 
 --- Check if framework is available
@@ -232,5 +416,16 @@ CreateThread(function()
     Wait(1000) -- Wait for frameworks to load
     detectAndInitFramework()
 end)
+
+-- Expose framework name for backwards compatibility
+lib.framework.name = detectedFramework
+
+-- Update the name property when framework is detected
+local originalDetect = detectAndInitFramework
+detectAndInitFramework = function()
+    local framework, obj = originalDetect()
+    lib.framework.name = framework
+    return framework, obj
+end
 
 return lib.framework

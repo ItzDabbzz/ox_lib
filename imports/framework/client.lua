@@ -7,124 +7,155 @@
     Copyright © 2025 ItzDabbzz <https://github.com/ItzDabbzz>
 ]]
 
----@class OxFrameworkClient
-lib.framework = {}
+---@class OxFramework
+lib.framework = lib.framework or {}
 
-local detectedFramework = nil
-local frameworkObject = nil
+local framework
+local frameworkName
+local sharedObject
 
---- Framework detection and initialization
-local function detectAndInitFramework()
-    if detectedFramework then
-        return detectedFramework, frameworkObject
-    end
-
-    -- Check for QBX
+--- Detects and initializes the framework
+local function detectFramework()
+    -- Check for QBX Core first (newer QB variant)
     if GetResourceState('qbx_core') == 'started' then
-        detectedFramework = 'qbx'
-        frameworkObject = exports.qbx_core
-        lib.print.info('Framework detected: QBX Core')
-        return detectedFramework, frameworkObject
+        framework = exports.qbx_core
+        frameworkName = 'qbx'
+        sharedObject = framework
+        return true
     end
 
-    -- Check for QBCore
+    -- Check for QB Core
     if GetResourceState('qb-core') == 'started' then
-        detectedFramework = 'qb'
-        if QBCore then
-            frameworkObject = QBCore
-        else
-            frameworkObject = exports['qb-core']:GetCoreObject()
-        end
-        lib.print.info('Framework detected: QBCore')
-        return detectedFramework, frameworkObject
+        framework = exports['qb-core']:GetCoreObject()
+        frameworkName = 'qb'
+        sharedObject = framework
+        return true
     end
 
     -- Check for ESX
     if GetResourceState('es_extended') == 'started' then
-        detectedFramework = 'esx'
-        if ESX then
-            frameworkObject = ESX
-        else
-            frameworkObject = exports['es_extended']:getSharedObject()
-        end
-        lib.print.info('Framework detected: ESX')
-        return detectedFramework, frameworkObject
+        framework = exports.es_extended:getSharedObject()
+        frameworkName = 'esx'
+        sharedObject = framework
+        return true
     end
 
-    lib.print.warn('No supported framework detected')
-    return nil, nil
+    -- Check for legacy ESX
+    if GetResourceState('esx_core') == 'started' then
+        framework = exports.esx_core:getSharedObject()
+        frameworkName = 'esx'
+        sharedObject = framework
+        return true
+    end
+
+    -- Check for other ESX variants
+    local esxVariants = { 'esx-legacy', 'esx_legacy', 'extendedmode' }
+    for _, variant in ipairs(esxVariants) do
+        if GetResourceState(variant) == 'started' then
+            framework = exports[variant]:getSharedObject()
+            frameworkName = 'esx'
+            sharedObject = framework
+            return true
+        end
+    end
+
+    return false
 end
 
---- Get the detected framework name
----@return string? framework The framework name ('esx', 'qb', 'qbx')
-function lib.framework.getFramework()
-    local framework, _ = detectAndInitFramework()
-    return framework
+--- Initialize framework detection
+CreateThread(function()
+    if not detectFramework() then
+        lib.print.warn('No supported framework detected')
+    else
+        lib.print.info(('Framework detected: %s'):format(frameworkName))
+    end
+end)
+
+--- Checks if a framework is available
+---@return boolean available Whether a framework is available
+function lib.framework.isAvailable()
+    return framework ~= nil
 end
 
---- Get the framework object
----@return table? frameworkObj The framework object
-function lib.framework.getFrameworkObject()
-    local _, obj = detectAndInitFramework()
-    return obj
+--- Gets the framework name
+---@return string? name The framework name ('qb', 'qbx', 'esx') or nil if none detected
+function lib.framework.getName()
+    return frameworkName
 end
 
---- Get player data from framework
----@return table? playerData The player data
+--- Gets the shared object for the framework
+---@return table? sharedObject The framework's shared object
+function lib.framework.getSharedObject()
+    return sharedObject
+end
+
+--- Gets player data for the current player
+---@return table? playerData Player data or nil if not available
 function lib.framework.getPlayerData()
-    local framework, frameworkObj = detectAndInitFramework()
-    if not framework or not frameworkObj then
+    if not framework then
         return nil
     end
 
-    if framework == 'esx' then
-        return frameworkObj.GetPlayerData and frameworkObj.GetPlayerData() or nil
-    elseif framework == 'qb' or framework == 'qbx' then
-        return frameworkObj.Functions and frameworkObj.Functions.GetPlayerData() or nil
+    if frameworkName == 'qbx' then
+        return exports.qbx_core:GetPlayerData()
+    elseif frameworkName == 'qb' then
+        return framework.Functions.GetPlayerData()
+    elseif frameworkName == 'esx' then
+        return framework.GetPlayerData()
     end
 
     return nil
 end
 
---- Check if player is loaded
----@return boolean loaded
-function lib.framework.isPlayerLoaded()
+--- Gets the current player's job
+---@return table? job Job information or nil if not found
+function lib.framework.getPlayerJob()
     local playerData = lib.framework.getPlayerData()
-    return playerData ~= nil
+    if not playerData then
+        return nil
+    end
+
+    if frameworkName == 'qbx' or frameworkName == 'qb' then
+        return playerData.job
+    elseif frameworkName == 'esx' then
+        return playerData.job
+    end
+
+    return nil
 end
 
---- Wait for player to be loaded
----@param timeout? number Timeout in milliseconds (default: 30000)
----@return boolean success Whether player loaded within timeout
-function lib.framework.waitForPlayerLoaded(timeout)
-    timeout = timeout or 30000
+--- Gets the current player's money amount
+---@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
+---@return number amount Money amount
+function lib.framework.getPlayerMoney(moneyType)
+    local playerData = lib.framework.getPlayerData()
+    if not playerData then
+        return 0
+    end
 
-    return lib.waitFor(function()
-        return lib.framework.isPlayerLoaded()
-    end, 'Player failed to load', timeout)
+    moneyType = moneyType or 'cash'
+
+    if frameworkName == 'qbx' or frameworkName == 'qb' then
+        return playerData.money[moneyType] or 0
+    elseif frameworkName == 'esx' then
+        if moneyType == 'cash' then
+            return playerData.money or 0
+        else
+            local accounts = playerData.accounts
+            if accounts then
+                for _, account in ipairs(accounts) do
+                    if account.name == moneyType then
+                        return account.money
+                    end
+                end
+            end
+        end
+    end
+
+    return 0
 end
 
---- Check if framework is available
----@return boolean available
-function lib.framework.isAvailable()
-    local framework, _ = detectAndInitFramework()
-    return framework ~= nil
-end
-
---- Refresh framework detection
----@return boolean success
-function lib.framework.refresh()
-    detectedFramework = nil
-    frameworkObject = nil
-
-    local framework, _ = detectAndInitFramework()
-    return framework ~= nil
-end
-
--- Initialize framework detection
-CreateThread(function()
-    Wait(1000) -- Wait for frameworks to load
-    detectAndInitFramework()
-end)
+-- Expose framework name for backwards compatibility
+lib.framework.name = frameworkName
 
 return lib.framework

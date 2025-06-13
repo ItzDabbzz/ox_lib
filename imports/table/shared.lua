@@ -123,6 +123,8 @@ local function shuffle(tbl)
     return tbl
 end
 
+-- ADDED FUNCTIONS BY DABZ --
+
 --- Returns a json table in a readable format
 ---@param tbl table The table to be formatted
 ---@param indent number The number of spaces to indent the output
@@ -148,12 +150,156 @@ local function jsonPrettyPrint(tbl, indent)
     return to_print
 end
 
+
+---@param tbl table The table to remove the value from
+---@param value any The value to be removed from the table
+---Removes the first occurrence of a value from a table.
+local function removeValue(tbl, value)
+    for k, v in pairs(tbl) do
+        if v == value then
+            tbl[k] = nil
+            break
+        end
+    end
+end
+
+---@param tbl table The table to search through
+---@param object any The object whose index in the table is to be found
+---@return integer? The index of the object in the table, or nil if not found
+---Gets the index of a value in a sequential (array-like) table.
+local function indexOf(tbl, object)
+    if type(tbl) == 'table' then
+        for i, value in ipairs(tbl) do
+            if object == value then
+                return i
+            end
+        end
+    end
+    return nil
+end
+
+---@param tbl table The table to add the value to
+---@param value any The value to be added to the table if it's unique
+---Adds a value to a table if it does not already exist.
+local function addUnique(tbl, value)
+    if not contains(tbl, value) then
+        table.insert(tbl, value)
+    end
+end
+
+---@param tbl1 table The first table to merge into (modified in-place)
+---@param tbl2 table The second table whose values will be added to the first table
+---Merges the contents of tbl2 into tbl1 (shallow merge, array-style).
+local function mergeTables(tbl1, tbl2)
+    for _, value in ipairs(tbl2) do
+        table.insert(tbl1, value)
+    end
+end
+
+---@param tbl table The table to be filtered
+---@param predicate fun(value:any, key:any):boolean The predicate function
+---@return table A new table containing only elements that satisfy the predicate function
+---Filters a table based on a predicate function.
+local function filter(tbl, predicate)
+    local filtered = {}
+    for k, v in pairs(tbl) do
+        if predicate(v, k) then
+            table.insert(filtered, v)
+        end
+    end
+    return filtered
+end
+
+---@param tbl table The table to be mapped
+---@param transform fun(value:any, key:any):any The transformation function
+---@return table A new table containing the results of applying the transform function
+---Maps a table to a new table based on a transformation function.
+local function map(tbl, transform)
+    local mapped = {}
+    for k, v in pairs(tbl) do
+        mapped[k] = transform(v, k)
+    end
+    return mapped
+end
+
+---@param user table? The user table (overrides)
+---@param default table The default table (fallbacks)
+---@return table A new table with user values overriding default values, merged recursively
+---Deep merges two tables, returning a new table. Does not mutate inputs.
+local function safeMerge(user, default)
+    if not lib.assert.type(default, 'table', 'Default') then
+        return {}
+    end
+
+    if user == nil then
+        return table_deepclone(default)
+    end
+
+    if not lib.assert.type(user, 'table', 'User options') then
+        return table_deepclone(default)
+    end
+
+    local out = {}
+
+    for k, v in pairs(default) do
+        if type(v) == "table" then
+            if user[k] ~= nil then
+                if not lib.assert.type(user[k], 'table', ('Key "%s"'):format(k)) then
+                    out[k] = table_deepclone(v)
+                else
+                    out[k] = safeMerge(user[k], v)
+                end
+            else
+                out[k] = table_deepclone(v)
+            end
+        else
+            if user[k] ~= nil then
+                out[k] = user[k]
+            else
+                out[k] = v
+            end
+        end
+    end
+
+    -- Copy any extra keys from user not in default
+    for k, v in pairs(user) do
+        if out[k] == nil then
+            out[k] = type(v) == "table" and table_deepclone(v) or v
+        end
+    end
+
+    return out
+end
+
+---@param tbl table? The table to count
+---@return number The number of key-value pairs in the table
+---Counts the number of elements in a table.
+local function count(tbl)
+    if not tbl then return 0 end
+    local count = 0
+    for _ in pairs(tbl) do
+        count = count + 1
+    end
+    return count
+end
+
+-- Assign existing functions
 table.contains = contains
 table.matches = table_matches
 table.deepclone = table_deepclone
 table.merge = table_merge
 table.shuffle = shuffle
 table.prettyprint = jsonPrettyPrint
+
+-- Assign new functions - Dabz
+table.removeValue = removeValue
+table.indexOf = indexOf
+table.addUnique = addUnique
+table.mergeTables = mergeTables
+table.filter = filter
+table.map = map
+table.safeMerge = safeMerge
+table.count = count
 
 local frozenNewIndex = function(self) error(('cannot set values on a frozen table (%s)'):format(self), 2) end
 local _rawset = rawset

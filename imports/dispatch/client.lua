@@ -104,29 +104,35 @@ end
 --- Creates dispatch function for ps-dispatch
 local function createPsDispatch()
     return function(data, coords, location)
-        TriggerServerEvent('ps-dispatch:server:notify', {
-            message = data.title,
-            codeName = data.title:lower():gsub('%s+', ''),
-            code = data.code,
-            icon = 'fas fa-info-circle',
+        -- Convert ox_lib format to ps-dispatch format
+        local dispatchData = {
+            message = data.title or data.message,
+            codeName = data.title and data.title:lower():gsub('%s+', '') or 'drugactivity',
+            code = data.code or '10-17',
+            icon = 'fas fa-pills', -- Drug related icon
             priority = data.priority == 'high' and 1 or 2,
             coords = coords,
             street = location,
+            gender = nil, -- Will be set by ps-dispatch
             jobs = data.jobs or { 'leo' },
             alert = {
-                radius = 0,
+                radius = data.blip and data.blip.radius or 0,
                 recipientList = data.jobs or { 'leo' },
-                sprite = data.blip and data.blip.sprite or 1,
+                sprite = data.blip and data.blip.sprite or 51,
                 color = data.blip and data.blip.color or 1,
-                scale = data.blip and data.blip.scale or 0.5,
-                length = 2,
+                scale = data.blip and data.blip.scale or 0.8,
+                length = 5, -- 5 minutes on map
                 sound = data.sound ~= false and 'Lose_1st' or nil,
                 sound2 = 'GTAO_FM_Events_Soundset',
+                offset = data.offset or false,
                 flash = data.priority == 'high'
             }
-        })
+        }
+
+        TriggerServerEvent('ps-dispatch:server:notify', dispatchData)
     end
 end
+
 
 --- Creates dispatch function for qs-dispatch
 local function createQsDispatch()

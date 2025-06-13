@@ -1,5 +1,10 @@
 # ox_lib
 
+## Dabz Note
+
+This is a fork of the original ox_lib repository by Overextended.
+The goal of this project/update is to make the end all of library's. one singular library nearly everyone uses but multi-framework friendly.
+
 A FiveM library and resource implementing reusable modules, methods, and UI elements.
 
 ![](https://img.shields.io/github/downloads/overextended/ox_lib/total?logo=github)

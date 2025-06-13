@@ -8,7 +8,7 @@
 ]]
 
 ---@class OxFramework
-lib.framework = {}
+local frameworkModule = {}
 
 local detectedFramework = nil
 local frameworkObject = nil
@@ -77,34 +77,34 @@ end
 
 --- Get the detected framework name
 ---@return string? framework The framework name ('esx', 'qb', 'qbx')
-function lib.framework.getFramework()
+function frameworkModule.getFramework()
     local framework, _ = detectAndInitFramework()
     return framework
 end
 
 --- Get the framework name (alias for getFramework)
 ---@return string? name The framework name ('esx', 'qb', 'qbx')
-function lib.framework.getName()
-    return lib.framework.getFramework()
+function frameworkModule.getName()
+    return frameworkModule.getFramework()
 end
 
 --- Get the framework object
 ---@return table? frameworkObj The framework object
-function lib.framework.getFrameworkObject()
+function frameworkModule.getFrameworkObject()
     local _, obj = detectAndInitFramework()
     return obj
 end
 
 --- Get the shared object for the framework (alias for getFrameworkObject)
 ---@return table? sharedObject The framework's shared object
-function lib.framework.getSharedObject()
-    return lib.framework.getFrameworkObject()
+function frameworkModule.getSharedObject()
+    return frameworkModule.getFrameworkObject()
 end
 
 --- Get a player object from any framework
 ---@param source number Player source ID
 ---@return table? player The player object
-function lib.framework.getPlayer(source)
+function frameworkModule.getPlayer(source)
     if not lib.assert.playerSource(source, 'Player source') then
         return nil
     end
@@ -143,7 +143,7 @@ end
 
 --- Get all online players
 ---@return table players Array of player objects
-function lib.framework.getAllPlayers()
+function frameworkModule.getAllPlayers()
     local framework, frameworkObj = detectAndInitFramework()
     if not framework or not frameworkObj then
         return {}
@@ -168,19 +168,19 @@ end
 ---@param source number Player source ID
 ---@param identifierType? string Type of identifier ('license', 'steam', 'discord', etc.)
 ---@return string? identifier The player identifier
-function lib.framework.getPlayerIdentifier(source, identifierType)
+function frameworkModule.getPlayerIdentifier(source, identifierType)
     if not lib.assert.playerSource(source, 'Player source') then
         return nil
     end
 
     identifierType = identifierType or 'license'
 
-    local player = lib.framework.getPlayer(source)
+    local player = frameworkModule.getPlayer(source)
     if not player then
         return nil
     end
 
-    local framework = lib.framework.getFramework()
+    local framework = frameworkModule.getFramework()
 
     if framework == 'esx' then
         if identifierType == 'license' then
@@ -218,13 +218,13 @@ end
 ---@param jobName string Job name to check
 ---@param grade? number Minimum grade required
 ---@return boolean hasJob Whether the player has the job
-function lib.framework.hasJob(source, jobName, grade)
-    local player = lib.framework.getPlayer(source)
+function frameworkModule.hasJob(source, jobName, grade)
+    local player = frameworkModule.getPlayer(source)
     if not player then
         return false
     end
 
-    local framework = lib.framework.getFramework()
+    local framework = frameworkModule.getFramework()
 
     if framework == 'esx' then
         local playerJob = player.getJob()
@@ -256,13 +256,13 @@ end
 --- Gets the player's current job
 ---@param source number Player source ID
 ---@return table? job Job information or nil if not found
-function lib.framework.getPlayerJob(source)
-    local player = lib.framework.getPlayer(source)
+function frameworkModule.getPlayerJob(source)
+    local player = frameworkModule.getPlayer(source)
     if not player then
         return nil
     end
 
-    local framework = lib.framework.getFramework()
+    local framework = frameworkModule.getFramework()
 
     if framework == 'esx' then
         return player.getJob()
@@ -273,103 +273,16 @@ function lib.framework.getPlayerJob(source)
     return nil
 end
 
---- Gets the player's money amount
----@param source number Player source ID
----@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
----@return number amount Money amount
-function lib.framework.getPlayerMoney(source, moneyType)
-    local player = lib.framework.getPlayer(source)
-    if not player then
-        return 0
-    end
-
-    moneyType = moneyType or 'cash'
-    local framework = lib.framework.getFramework()
-
-    if framework == 'esx' then
-        if moneyType == 'cash' then
-            return player.getMoney()
-        elseif moneyType == 'bank' then
-            return player.getAccount('bank').money
-        else
-            local account = player.getAccount(moneyType)
-            return account and account.money or 0
-        end
-    elseif framework == 'qb' or framework == 'qbx' then
-        return player.PlayerData.money[moneyType] or 0
-    end
-
-    return 0
-end
-
---- Adds money to a player
----@param source number Player source ID
----@param amount number Amount to add
----@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
----@param reason? string Reason for the transaction
----@return boolean success Whether the money was added successfully
-function lib.framework.addPlayerMoney(source, amount, moneyType, reason)
-    local player = lib.framework.getPlayer(source)
-    if not player then
-        return false
-    end
-
-    moneyType = moneyType or 'cash'
-    local framework = lib.framework.getFramework()
-
-    if framework == 'esx' then
-        if moneyType == 'cash' then
-            player.addMoney(amount, reason)
-        else
-            player.addAccountMoney(moneyType, amount, reason)
-        end
-        return true
-    elseif framework == 'qb' or framework == 'qbx' then
-        return player.Functions.AddMoney(moneyType, amount, reason) or false
-    end
-
-    return false
-end
-
---- Removes money from a player
----@param source number Player source ID
----@param amount number Amount to remove
----@param moneyType? string Money type ('cash', 'bank', 'crypto', etc.)
----@param reason? string Reason for the transaction
----@return boolean success Whether the money was removed successfully
-function lib.framework.removePlayerMoney(source, amount, moneyType, reason)
-    local player = lib.framework.getPlayer(source)
-    if not player then
-        return false
-    end
-
-    moneyType = moneyType or 'cash'
-    local framework = lib.framework.getFramework()
-
-    if framework == 'esx' then
-        if moneyType == 'cash' then
-            player.removeMoney(amount, reason)
-        else
-            player.removeAccountMoney(moneyType, amount, reason)
-        end
-        return true
-    elseif framework == 'qb' or framework == 'qbx' then
-        return player.Functions.RemoveMoney(moneyType, amount, reason) or false
-    end
-
-    return false
-end
-
 --- Check if framework is available
 ---@return boolean available
-function lib.framework.isAvailable()
+function frameworkModule.isAvailable()
     local framework, _ = detectAndInitFramework()
     return framework ~= nil
 end
 
 --- Refresh framework detection
 ---@return boolean success
-function lib.framework.refresh()
+function frameworkModule.refresh()
     detectedFramework = nil
     frameworkObject = nil
     playerCache = {}
@@ -380,7 +293,7 @@ end
 
 --- Get framework statistics
 ---@return table stats
-function lib.framework.getStats()
+function frameworkModule.getStats()
     local framework, _ = detectAndInitFramework()
 
     local stats = {
@@ -397,7 +310,7 @@ function lib.framework.getStats()
 
     -- Count online players
     if framework then
-        local players = lib.framework.getAllPlayers()
+        local players = frameworkModule.getAllPlayers()
         stats.onlinePlayers = #players
     end
 
@@ -418,14 +331,17 @@ CreateThread(function()
 end)
 
 -- Expose framework name for backwards compatibility
-lib.framework.name = detectedFramework
+frameworkModule.name = detectedFramework
 
 -- Update the name property when framework is detected
 local originalDetect = detectAndInitFramework
 detectAndInitFramework = function()
     local framework, obj = originalDetect()
-    lib.framework.name = framework
+    frameworkModule.name = framework
     return framework, obj
 end
 
-return lib.framework
+-- Set lib.framework to the module
+lib.framework = frameworkModule
+
+return frameworkModule

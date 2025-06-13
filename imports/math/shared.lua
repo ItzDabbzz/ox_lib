@@ -226,6 +226,40 @@ function math.round(value, places)
     return math.floor(value + 0.5)
 end
 
+---Creates a rotation matrix from euler angles (in degrees)
+---@param rotation vector3 Rotation in degrees (pitch, yaw, roll)
+---@return table rotationMatrix 3x3 rotation matrix
+function math.getRotationMatrix(rotation)
+    local pitch = math.rad(rotation.x)
+    local yaw = math.rad(rotation.y)
+    local roll = math.rad(rotation.z)
+
+    local cosPitch = math.cos(pitch)
+    local sinPitch = math.sin(pitch)
+    local cosYaw = math.cos(yaw)
+    local sinYaw = math.sin(yaw)
+    local cosRoll = math.cos(roll)
+    local sinRoll = math.sin(roll)
+
+    return {
+        { cosYaw * cosRoll,                                 -cosYaw * sinRoll,                                sinYaw },
+        { cosPitch * sinRoll + sinPitch * sinYaw * cosRoll, cosPitch * cosRoll - sinPitch * sinYaw * sinRoll, -sinPitch * cosYaw },
+        { sinPitch * sinRoll - cosPitch * sinYaw * cosRoll, sinPitch * cosRoll + cosPitch * sinYaw * sinRoll, cosPitch * cosYaw }
+    }
+end
+
+---Rotates a vector using a rotation matrix
+---@param vector vector3 Vector to rotate
+---@param rotationMatrix table 3x3 rotation matrix
+---@return vector3 rotatedVector
+function math.rotateVector(vector, rotationMatrix)
+    local x = vector.x * rotationMatrix[1][1] + vector.y * rotationMatrix[1][2] + vector.z * rotationMatrix[1][3]
+    local y = vector.x * rotationMatrix[2][1] + vector.y * rotationMatrix[2][2] + vector.z * rotationMatrix[2][3]
+    local z = vector.x * rotationMatrix[3][1] + vector.y * rotationMatrix[3][2] + vector.z * rotationMatrix[3][3]
+
+    return vector3(x, y, z)
+end
+
 --- Random number generator
 --- No support for decimals
 ---@param firstNum number

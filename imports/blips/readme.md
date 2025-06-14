@@ -456,6 +456,8 @@ This project is licensed under the LGPL-3.0 License - see the [LICENSE](https://
 
 - [Overextended](https://github.com/overextended) for the OX Lib framework
 - [ItzDabbzz](https://github.com/ItzDabbzz) for the blips implementation
+- [frowmza - Qbox Discord Post](https://discord.com/channels/1012753553418354748/1377308087110864966/1377308087110864966) for base category wrapper
+- [CitizenFX](https://github.com/citizenfx/fivem/pull/3223)
 - FiveM community for testing and feedback
 
 ## 📞 Support
